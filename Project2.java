@@ -3,62 +3,65 @@ import java.util.*;
 
 public class Project2 {
 	
+	static int clk = 0;
+	static ClassList classes = new ClassList();
 	//Main driver
 	public static void main(String args[]) {
 
-		//DirectedGraph graph = createGraph();
-		DirectedGraph graph = createGraph("CLASS_INFO.txt") //not certain if this is the correct path, should work if it is though
+		DirectedGraph graph = createGraph("CLASS_INFO.txt");
 		depthFirstSearch(graph);
+		
+		for (ClassList.ClassInfo course : classes.classes) {
+			System.out.println(course.crn + " | " + course.previsit + ", " + course.postvisit);
+		}
+		
+		ArrayList<ClassList.ClassInfo> topo_order = sortByPost();
+		System.out.println("---------------");
+		for (ClassList.ClassInfo course : topo_order) {
+			System.out.println(course.crn + " | " + course.previsit + ", " + course.postvisit);
+		}
 		
 	}
 	
-	/* For team mates: 
-	 * addEdge now accepts varargs! addEdge(source, destinations...) 
-	 * This graph has prerequisites pointing to post requisites. Change as needed */
-	//Creates and returns directed graph
-	/*
-	static DirectedGraph createGraph() {
-		DirectedGraph graph = new DirectedGraph();
-
-		graph.addVertex("CS 1411"); 
-		graph.addVertex("MATH 1451");
-		graph.addVertex("ENGL 1301");
-		graph.addVertex("CS 1412"); 	graph.addEdge("CS 1411", "CS 1412");
-		graph.addVertex("MATH 1452"); 	graph.addEdge("MATH 1451", "MATH 1452");
-		graph.addVertex("PHYS 1408"); 	graph.addEdge("MATH 1451", "PHYS 1408");
-		graph.addVertex("ENGL 1302");	graph.addEdge("ENGL 1301", "ENGL 1302");
-		graph.addVertex("CS 2413"); 	graph.addEdge("CS 1412", "CS 2413");
-		graph.addVertex("CS 1382");	graph.addEdge("CS 1412", "CS 1382");
-		graph.addVertex("ECE 2372");	graph.addEdge("MATH 1451", "ECE 2372");
-		graph.addVertex("MATH 2450"); 	graph.addEdge("MATH 1452", "MATH 2450");
-		graph.addVertex("PHYS 2401"); 	graph.addEdge("PHYS 1408", "PHYS 2401");
-		graph.addVertex("CS 2350");	graph.addEdge("CS 1412", "CS 2350"); graph.addEdge("ECE 2372", "CS 2350");
-		graph.addVertex("CS 2365");	graph.addEdge("CS 2413", "CS 2365");
-		graph.addVertex("ENGR 2392");
-		graph.addVertex("POLS 1301");
-		graph.addVertex("MATH 2360");	graph.addEdge("MATH 1452", "MATH 2360");
-		graph.addVertex("ENGL 2311");	graph.addEdge("ENGL 1301", "ENGL 2311"); graph.addEdge("ENGL 1302", "ENGL 2311");
-		graph.addVertex("CS 3361");	graph.addEdge("CS 2413", "CS 3361");
-		graph.addVertex("CS 3364");	graph.addEdge("CS 2413", "CS 3364"); graph.addEdge("CS 1382", "CS 3364"); graph.addEdge("MATH 2360", "CS 3364");
-		graph.addVertex("MATH 3342");	graph.addEdge("MATH 2450", "MATH 3342");
-		graph.addVertex("POLS 2306");
-		graph.addVertex("CS 3365");	graph.addEdge("CS 2365", "CS 3365"); graph.addEdge("CS 2413", "CS 3365"); graph.addEdge("MATH 3342", "MATH 3365");
-		graph.addVertex("CS 3375");	graph.addEdge("CS 2350", "CS 3375");
-		graph.addVertex("CS 3383");	graph.addEdge("CS 1382", "CS 3383");
-		graph.addVertex("CS 4365");	graph.addEdge("CS 1382", "CS 4365");
-		graph.addVertex("CS 4352");	graph.addEdge("CS 3364", "CS 4352"); graph.addEdge("CS 3375", "CS 4352");
-		graph.addVertex("CS 4354");	graph.addEdge("CS 3364", "CS 4352"); graph.addEdge("CS 3375", "CS 4352");
-		graph.addVertex("CS 4366");	graph.addEdge("CS 4365", "CS 4366");
+	static ArrayList<ClassList.ClassInfo> sortByPost() {
+		ArrayList<ClassList.ClassInfo> sorted = new ArrayList<>();
 		
-		return graph;
+		//fill arraylist
+		for (ClassList.ClassInfo course : classes.classes) {
+			sorted.add(course);
+		}
+		
+		for (int i=0; i<sorted.size(); i++) {
+			for (int j=i; j<sorted.size(); j++) {
+				if (sorted.get(i).postvisit > sorted.get(j).postvisit)
+					swap(sorted, i, j);
+			}
+		}
+		
+		return sorted;
 	}
-	*/
-	//new createGraph method (reads from textfile)
+	
+	static void swap(ArrayList<ClassList.ClassInfo> courses, int index1, int index2) {
+		ClassList.ClassInfo temp = courses.get(index1);
+		courses.set(index1, courses.get(index2));
+		courses.set(index2, temp);
+	}
+	
+	//createGraph(String filepath) creates and returns a graph from a text file
+	//example lines of class info file
+	//-------------------------------------------------
+	//"crn1 - course_name1 (N/A)"
+	//"crn2 - course_name1 (N/A)"
+	//"crn3 - course_name3 (crn1)"
+	//"crn4 - course_name4 (crn1 and crn2)"
+	//"crn5 - course_name4 (crn3 and crn4)"
+	//"crn6 - course_name6 (crn1, crn2 and crn5)"
+	//-------------------------------------------------
 	static DirectedGraph createGraph(String filepath) {
 		DirectedGraph graph = new DirectedGraph();
 		
 		File file = new File(filepath); //file that the class info is in
-		Scanner scan;	//scanner to read the file
+		Scanner scan;					//scanner to read the file
 		
 		//check that the file exists
 		try {
@@ -67,15 +70,7 @@ public class Project2 {
 			
 			//read through each line in the file
 			while(scan.hasNextLine()) {
-				//example lines of class info file
-				//-------------------------------------------------
-				//"crn1 - course_name1 (N/A)"
-				//"crn2 - course_name1 (N/A)"
-				//"crn3 - course_name3 (crn1)"
-				//"crn4 - course_name4 (crn1 and crn2)"
-				//"crn5 - course_name4 (crn3 and crn4)"
-				//"crn6 - course_name6 (crn1, crn2 and crn5)"
-				//-------------------------------------------------
+				
 				String nextLine = scan.nextLine(); //string holding entire line
 				
 				char[] delimiters = {'-', '(', ')'};
@@ -142,8 +137,8 @@ public class Project2 {
 				if (preReqs.size()>0) {
 					//for every preReq that exists
 					for (String preReq : preReqs)
-						//add an edge to the graph of preReq -> vertex (this will generate a vertex if the preReq doesn't exist yet)
-						graph.addEdge(preReq, crn);
+						//add an edge to the graph of vertex -> preReq (this will generate a vertex if the preReq doesn't exist yet)
+						graph.addEdge(crn, preReq);
 				}
 				
 			}
@@ -157,25 +152,29 @@ public class Project2 {
 		return graph;
 	}
 	
-	//depthFirstSearch() creates an iterator with all vertices, iterates through it until all vertices are visited
+	//depthFirstSearch() creates an iterator with all Vertexes, iterates through it until all vertices are visited
 	static void depthFirstSearch(DirectedGraph graph) {
-		Iterator<DirectedGraph.Vertex> itr = graph.adjacent.keySet().iterator();				//creates iterator for all vertices
+		Iterator<DirectedGraph.Vertex> itr = graph.adjacent.keySet().iterator();					//creates iterator for all vertices
 		Set<DirectedGraph.Vertex> visited = new LinkedHashSet<DirectedGraph.Vertex>();				//creates visited = false for all vertices
-		while(itr.hasNext()) {											//for all vertices
-			if(!visited.contains(itr.next()))								//if not visited
-				explore(graph, itr.next(), visited);							//explore
+		while(itr.hasNext()) {																		//for all vertices
+				explore(graph, itr.next(), visited);												//explore
 		}
 	}
 	
-	//explore() explores all vertices adjacent to a vertex (recursively)
+	//explore() explores all vertices adjacent to a Vertex (recursively)
 	static void explore(DirectedGraph graph, DirectedGraph.Vertex root, Set<DirectedGraph.Vertex> visited) {
-		if(!visited.contains(root) && graph.getAdjVertices(root.label)!= null)  { 				//if not visited
-			visited.add(root); 										//visited = true
-			if(graph.getAdjVertices(root.label)!= null) {							//if there are adjacent vertices
-				for (int i = 0; i<graph.getAdjVertices(root.label).size(); i++) {			//visit all vertices in the adjacency list
-					explore(graph, graph.getAdjVertices(root.label).get(i), visited);		//recurs until all vertices have been visited
-				}
+		if(!visited.contains(root))  {																//If not visited
+			System.out.println("Exploring: " + root.label);
+			clk++;
+			classes.add(root.label, clk);
+			
+			visited.add(root); 																		//visited = true
+			if(graph.getAdjVertices(root.label)!= null) {											//if there are adjacent vertices
+				for (int i = 0; i<graph.getAdjVertices(root.label).size(); i++)						//visit all vertices in the adjacency list
+					explore(graph, graph.getAdjVertices(root.label).get(i), visited);		
 			}
+			clk++;
+			classes.findClass(root.label).postvisit = clk;
 		}
 	}
 }
@@ -209,10 +208,23 @@ class DirectedGraph {
         return adjacent.get(new Vertex(label));
     }
     
+	void getOrderedArray() {
+		Iterator<DirectedGraph.Vertex> itr = this.adjacent.keySet().iterator();
+		int postVisitArr[] = new int[this.adjacent.keySet().size()];
+		int i = 0;
+		while(itr.hasNext()) {
+			DirectedGraph.Vertex v = itr.next();
+			postVisitArr[i] = v.postVisit; 
+			System.out.println(v.label + " " + v.postVisit);
+			i++;
+		}
+		
+	}
+    
     //printGraph() prints a complete adjacency list to the console
     void printGraph() {
         StringBuffer sb = new StringBuffer();
-        System.out.println("Prereq \t\t\t For");
+        System.out.println("Course \t\t\tPrereq(s)");
         for(Vertex v : adjacent.keySet()) {
             sb.append(v);
             System.out.print(sb);
@@ -229,6 +241,7 @@ class DirectedGraph {
     //Nested in DirectedGraph
     class Vertex {
         String label;
+        int postVisit, preVisit;
         
         //Constructor
         Vertex(String label) {
@@ -260,6 +273,10 @@ class DirectedGraph {
                     return false;
             } else if (!label.equals(((Vertex) obj).label))
                 return false;
+            //if(postVisit != (((Vertex) obj).postVisit))
+            	//return false;
+            //if(preVisit != (((Vertex) obj).preVisit))
+            	//return false;
             return true;
         }
         
@@ -275,4 +292,78 @@ class DirectedGraph {
             return DirectedGraph.this;
         }
     }
+}
+
+class ClassList {
+	ArrayList<ClassInfo> classes;
+	
+	ClassList() {
+		this.classes = new ArrayList<>();
+	}
+	
+	public void add(String crn_, String course_name_, ArrayList<String> preReqs_, int previsit_, int postvisit_) {
+		ClassInfo classinfo_ = new ClassInfo(crn_, course_name_, preReqs_, previsit_, postvisit_);
+		this.classes.add(classinfo_);
+	}
+	public void add(String crn_, String course_name_, ArrayList<String> preReqs_) {
+		ClassInfo classinfo_ = new ClassInfo(crn_, course_name_, preReqs_);
+		this.classes.add(classinfo_);
+	}
+	public void add(String crn_, int previsit_) {
+		ClassInfo classinfo_ = new ClassInfo(crn_, previsit_);
+		this.classes.add(classinfo_);
+	}
+	
+	class ClassInfo {
+		String crn;
+		String course_name;
+		ArrayList<String> preReqs;
+		int previsit;
+		int postvisit;
+		
+		ClassInfo() {}
+		
+		ClassInfo(String crn_, int previsit_) { 
+			this.crn = crn_;
+			this.previsit = previsit_;
+		}
+		
+		ClassInfo(String crn_, String course_name_, ArrayList<String> preReqs_) { 
+			this.crn = crn_;
+			this.course_name = course_name_;
+			
+			this.preReqs = new ArrayList<String>();
+			for (String preReq_ : preReqs_) {
+				this.preReqs.add(preReq_);
+			}
+		}
+		
+		ClassInfo(String crn_, String course_name_, ArrayList<String> preReqs_, int previsit_, int postvisit_) { 
+			this.crn = crn_;
+			this.course_name = course_name_;
+			this.previsit = previsit_;
+			this.postvisit = postvisit_;
+			
+			this.preReqs = new ArrayList<String>();
+			for (String preReq_ : preReqs_) {
+				this.preReqs.add(preReq_);
+			}
+		}
+		
+		public ClassInfo copyClass() {
+			return this;
+		}
+	}
+	
+	public ClassInfo findClass(String crn_) {
+		ClassInfo foundClass = new ClassInfo();
+		for (ClassInfo course : classes) {
+			if (course.crn == crn_) {
+				foundClass = course.copyClass();
+				break;
+			}
+		}
+		
+		return foundClass;
+	}
 }
