@@ -1,3 +1,4 @@
+import java.io.File;
 import java.util.*;
 
 public class Project2 {
@@ -5,7 +6,8 @@ public class Project2 {
 	//Main driver
 	public static void main(String args[]) {
 
-		DirectedGraph graph = createGraph();
+		//DirectedGraph graph = createGraph();
+		DirectedGraph graph = createGraph("CLASS_INFO.txt") //not certain if this is the correct path, should work if it is though
 		depthFirstSearch(graph);
 		
 	}
@@ -14,6 +16,7 @@ public class Project2 {
 	 * addEdge now accepts varargs! addEdge(source, destinations...) 
 	 * This graph has prerequisites pointing to post requisites. Change as needed */
 	//Creates and returns directed graph
+	/*
 	static DirectedGraph createGraph() {
 		DirectedGraph graph = new DirectedGraph();
 
@@ -47,6 +50,110 @@ public class Project2 {
 		graph.addVertex("CS 4354");	graph.addEdge("CS 3364", "CS 4352"); graph.addEdge("CS 3375", "CS 4352");
 		graph.addVertex("CS 4366");	graph.addEdge("CS 4365", "CS 4366");
 		
+		return graph;
+	}
+	*/
+	//new createGraph method (reads from textfile)
+	static DirectedGraph createGraph(String filepath) {
+		DirectedGraph graph = new DirectedGraph();
+		
+		File file = new File(filepath); //file that the class info is in
+		Scanner scan;	//scanner to read the file
+		
+		//check that the file exists
+		try {
+			//open the file using scanner
+			scan = new Scanner(file);
+			
+			//read through each line in the file
+			while(scan.hasNextLine()) {
+				//example lines of class info file
+				//-------------------------------------------------
+				//"crn1 - course_name1 (N/A)"
+				//"crn2 - course_name1 (N/A)"
+				//"crn3 - course_name3 (crn1)"
+				//"crn4 - course_name4 (crn1 and crn2)"
+				//"crn5 - course_name4 (crn3 and crn4)"
+				//"crn6 - course_name6 (crn1, crn2 and crn5)"
+				//-------------------------------------------------
+				String nextLine = scan.nextLine(); //string holding entire line
+				
+				char[] delimiters = {'-', '(', ')'};
+				int[] delimIndex =	{	nextLine.indexOf(delimiters[0]),			//index of the hyphen that follows the crn
+										nextLine.indexOf(delimiters[1]),			//index of the left parenthesis that the pre-requisites are inside of 
+										nextLine.indexOf(delimiters[2])		};		//index of the right parenthesis that the pre-requisites are inside of
+				
+				//separate the line into 3 strings
+				String crn = nextLine.substring(0, delimIndex[0]).trim();							//string holding the crn of the course
+				String course_name = nextLine.substring(delimIndex[0]+1, delimIndex[1]).trim();		//string holding the course name (currently unnused)
+				String prereqString = nextLine.substring(delimIndex[1]+1, delimIndex[2]).trim();	//string holding all prerequisites (if none exist then it holds "N/A")
+				
+				//initialize an arraylist for pre-requisites
+				ArrayList<String> preReqs = new ArrayList<>(); //arraylist to hold each prerequisite individually
+				
+				
+				//check that at least one pre-requisite exists
+				if (!prereqString.equalsIgnoreCase("N/A")) {
+					String temp = prereqString; //temporary string that will be slowly broken apart while finding pre-reqs
+					
+					//find every pre-requisite crn that is followed by a comma
+					while (temp.contains(",")) {
+						//find comma
+						int commaIndex = temp.indexOf(",");	//index location of comma
+						//break string in 2
+						String beforeComma = temp.substring(0, commaIndex);	// pre-req before comma
+						String afterComma = temp.substring(commaIndex+1);		// string following comma
+						
+						//add pre-req to array
+						preReqs.add(beforeComma.trim());
+						//keep searching for commas
+						temp = afterComma;
+					}
+					
+					//check if there is more than 1 pre-requisite
+					if (temp.contains(" and ")) {
+						//break the string using " and " as a delimiter
+						int andStartIndex = temp.indexOf(" and "); //find the location of " and " in the string
+						
+						//separate into 2 strings
+						String beforeAnd = temp.substring(0, andStartIndex);	//crn before " and "
+						String afterAnd = temp.substring(andStartIndex+4);		//crn after " and "
+						
+						//add strings to arraylist
+						preReqs.add(beforeAnd.trim());
+						preReqs.add(afterAnd.trim());
+					
+					//if there is only 1 pre-requisite
+					} else {
+						//add the full string to the arraylist
+						preReqs.add(temp.trim());
+					}
+				}
+				
+				
+				
+				//vertex info has been found
+				//following is graph generation
+				
+				//add vertex to graph
+				graph.addVertex(crn);
+				
+				//check if preReqs exist
+				if (preReqs.size()>0) {
+					//for every preReq that exists
+					for (String preReq : preReqs)
+						//add an edge to the graph of preReq -> vertex (this will generate a vertex if the preReq doesn't exist yet)
+						graph.addEdge(preReq, crn);
+				}
+				
+			}
+			
+		//throw error if file not found
+		} catch (Exception error) {
+				error.printStackTrace();
+		}
+		
+		//return objects
 		return graph;
 	}
 	
