@@ -3,49 +3,62 @@ import java.util.*;
 
 public class Project2 {
 	
-	static int clk = 0;
-	static ClassList classes = new ClassList();
+	static int clk = 0;				//clock to count time durring depth first search
+	static ClassList classes = new ClassList();	//arraylist to keep track of pre and post visit values of classes
+	
 	//Main driver
 	public static void main(String args[]) {
-
+		//read the input text file and generate a graph based on it
 		DirectedGraph graph = createGraph("CLASS_INFO.txt");
+		//perform depth first search on the graph (modified to track pre and post visit values)
 		depthFirstSearch(graph);
 		
+		//display the pre and post visit values of all courses
 		for (ClassList.ClassInfo course : classes.classes) {
 			System.out.println(course.crn + " | " + course.previsit + ", " + course.postvisit);
 		}
 		
+		//create a topological ordering of all classes based on post visit values
 		ArrayList<ClassList.ClassInfo> topo_order = sortByPost();
+		
 		System.out.println("---------------");
+		//display the topological ordering
 		for (ClassList.ClassInfo course : topo_order) {
 			System.out.println(course.crn + " | " + course.previsit + ", " + course.postvisit);
 		}
 		
 	}
 	
+	//sorting algorithm to generate a topological ordering
 	static ArrayList<ClassList.ClassInfo> sortByPost() {
-		ArrayList<ClassList.ClassInfo> sorted = new ArrayList<>();
+		ArrayList<ClassList.ClassInfo> sorted = new ArrayList<>(); //arraylist to hold the topological ordering
 		
 		//fill arraylist
 		for (ClassList.ClassInfo course : classes.classes) {
 			sorted.add(course);
 		}
 		
+		//sort the arraylist least to greatest
 		for (int i=0; i<sorted.size(); i++) {
 			for (int j=i; j<sorted.size(); j++) {
+				//compare earlier node to later node
 				if (sorted.get(i).postvisit > sorted.get(j).postvisit)
+					//if later node is smaller then swap
 					swap(sorted, i, j);
 			}
 		}
 		
+		//return the topological ordering
 		return sorted;
 	}
 	
+	//swap method
 	static void swap(ArrayList<ClassList.ClassInfo> courses, int index1, int index2) {
 		ClassList.ClassInfo temp = courses.get(index1);
 		courses.set(index1, courses.get(index2));
 		courses.set(index2, temp);
 	}
+	
 	
 	//createGraph(String filepath) creates and returns a graph from a text file
 	//example lines of class info file
@@ -294,76 +307,106 @@ class DirectedGraph {
     }
 }
 
+
+//class to hold an array of classinfo objects (where a classinfo stores the infor of a class such as its crn the course name and a list of prerequisite classes)
+//classinfo also stores the pre and post visit values from depth first search
 class ClassList {
-	ArrayList<ClassInfo> classes;
+	ArrayList<ClassInfo> classes; //an array list of all classes
 	
+	//constructors
+	
+	//default: makes and empty array list
 	ClassList() {
 		this.classes = new ArrayList<>();
 	}
 	
+	
+	//methods to add classes to the class list
+	
+	//most specific: recieves all info about class
 	public void add(String crn_, String course_name_, ArrayList<String> preReqs_, int previsit_, int postvisit_) {
 		ClassInfo classinfo_ = new ClassInfo(crn_, course_name_, preReqs_, previsit_, postvisit_);
 		this.classes.add(classinfo_);
 	}
+	//just class info: only recieves the info related to the class (no info from depth first search)
 	public void add(String crn_, String course_name_, ArrayList<String> preReqs_) {
 		ClassInfo classinfo_ = new ClassInfo(crn_, course_name_, preReqs_);
 		this.classes.add(classinfo_);
 	}
+	//depth first search previsit (used to create an arraylist during depthfirst search to keep track of pre and post visit)
+	//-------| (doesn't ask for post visit value because the explore algorithm has only just reached the vertex)
 	public void add(String crn_, int previsit_) {
 		ClassInfo classinfo_ = new ClassInfo(crn_, previsit_);
 		this.classes.add(classinfo_);
 	}
 	
+	
+	//nested class for objects to store course info
 	class ClassInfo {
-		String crn;
-		String course_name;
-		ArrayList<String> preReqs;
-		int previsit;
-		int postvisit;
+		String crn;			//string holding crn value
+		String course_name;		//string holding course name
+		ArrayList<String> preReqs;	//arraylist of strings holding the pre-requisite crn values
+		int previsit;		//pre visit time on clock
+		int postvisit;		//post visit time on clock
 		
+		
+		//default constructor
 		ClassInfo() {}
 		
+		//constructor for use during depth first search
 		ClassInfo(String crn_, int previsit_) { 
 			this.crn = crn_;
 			this.previsit = previsit_;
 		}
 		
+		//constructor for just class information
 		ClassInfo(String crn_, String course_name_, ArrayList<String> preReqs_) { 
 			this.crn = crn_;
 			this.course_name = course_name_;
 			
+			//copy the array list given
 			this.preReqs = new ArrayList<String>();
 			for (String preReq_ : preReqs_) {
 				this.preReqs.add(preReq_);
 			}
 		}
 		
+		//most specific constructor
 		ClassInfo(String crn_, String course_name_, ArrayList<String> preReqs_, int previsit_, int postvisit_) { 
 			this.crn = crn_;
 			this.course_name = course_name_;
 			this.previsit = previsit_;
 			this.postvisit = postvisit_;
 			
+			//copy the array list given
 			this.preReqs = new ArrayList<String>();
 			for (String preReq_ : preReqs_) {
 				this.preReqs.add(preReq_);
 			}
 		}
 		
+		//function to copy a ClassInfo object
 		public ClassInfo copyClass() {
 			return this;
 		}
 	}
 	
+	//function to find a course from within the arraylist of courses, using only the corresponding crn
 	public ClassInfo findClass(String crn_) {
+		//create an empty ClassInfo object
 		ClassInfo foundClass = new ClassInfo();
+		
+		//itterate through all courses in arraylist
 		for (ClassInfo course : classes) {
+			//find a course with a matching crn
 			if (course.crn == crn_) {
+				//copy that ClassInfo object into the output object
 				foundClass = course.copyClass();
 				break;
 			}
 		}
 		
+		//return output
 		return foundClass;
 	}
 }
