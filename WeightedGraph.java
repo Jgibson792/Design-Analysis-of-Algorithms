@@ -136,13 +136,30 @@ public class WeightedGraph {
 		
 		Graph dijkstra_1 = new Graph("DIJKSTRA_GRAPH_1.txt");
 		Graph dijkstra_2 = new Graph("DIJKSTRA_GRAPH_2.txt");
+		Graph dijkstra_3 = new Graph("PROJECT_GRAPH.txt");
 		Graph bellman_ford_1 = new Graph("BELLMAN_FORD_GRAPH_1.txt");
+		Graph bellman_ford_2 = new Graph("PROJECT_GRAPH.txt");
 		
+		
+		System.out.println("Dijkstra 1:");
 		dijkstra_1.printGraph();
 		System.out.println();
+		
+		System.out.println("Dijkstra 2:");
 		dijkstra_2.printGraph();
 		System.out.println();
+		
+		System.out.println("Dijkstra 3:");
+		dijkstra_3.printGraph();
+		System.out.println();
+		
+		
+		System.out.println("Bellman Ford 1:");
 		bellman_ford_1.printGraph();
+		System.out.println();
+		
+		System.out.println("BellmanFord 2:");
+		bellman_ford_2.printGraph();
 		System.out.println();
 		
 	}
